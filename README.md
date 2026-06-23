@@ -1,133 +1,98 @@
 # codemap.nvim
 
-`codemap.nvim` is a small competitive-programming/workspace helper for Neovim. It opens a two-pane layout around a fixed workspace, runs the current solution against `input.txt`, writes results to `output.txt`, and supports quick debugging for Go and Python through `nvim-dap`.
+`codemap.nvim` is a small Neovim helper for competitive programming and scratch work. It opens a two-pane workspace, keeps shared `input.txt` and `output.txt` files, runs the current solution, and can hand Go or Python buffers off to `nvim-dap`.
 
 ## Features
 
-- Opens a Codemap workspace at `~/Projects/leet`.
-- Maintains shared `input.txt` and `output.txt` files.
-- Runs Go, Python, JavaScript, TypeScript, Java, C++, C, Rust, and Ruby files.
+- Opens a dedicated Codemap workspace with a code pane and output pane.
+- Maintains shared `input.txt` and `output.txt` files inside the workspace.
+- Runs Go, Python, JavaScript, TypeScript, Java, C++, C, Rust, and Ruby buffers.
 - Highlights common runtime and compiler errors in the output buffer.
-- Provides quick debug entry points for Go and Python when `nvim-dap` is configured.
-- Exposes commands and mappings for fast iteration.
+- Supports quick debugging for Go and Python through `nvim-dap`.
+- Ships with user commands and optional default keymaps.
 
 ## Requirements
 
-- Neovim 0.10+ recommended.
-- Runtime tools for the language you want to run, for example `go`, `python3`, `node`, `g++`, `rustc`, or `ruby`.
-- Optional: `nvim-dap` for `:CodemapDebug`, `<leader>cd`, or `<F6>`.
+- Neovim 0.10 or newer.
+- Language runtimes or compilers for the languages you plan to run.
+- Optional: `nvim-dap` for `:CodemapDebug`.
 
-## Installation With lazy.nvim
+## Installation
 
-Use the local development path while you are actively editing the plugin:
-
-```lua
-return {
-  {
-    dir = "~/Projects/codemap.nvim",
-    name = "codemap.nvim",
-    lazy = false,
-  },
-}
-```
-
-After publishing to GitHub, switch to the remote repo:
+### lazy.nvim
 
 ```lua
 return {
   {
-    "YOUR_GITHUB_USERNAME/codemap.nvim",
+    "bogusdeck/codemap.nvim",
     lazy = false,
+    config = function()
+      require("codemap").setup()
+    end,
   },
 }
 ```
 
-`lazy = false` is intentional because the `codemap` shell launcher starts Neovim and immediately calls `require("codemap")`.
+## Configuration
 
-## Usage
+Default configuration:
 
-Open the shared Codemap workspace:
-
-```vim
-:Codemap
+```lua
+require("codemap").setup({
+  workspace = vim.fn.stdpath("data") .. "/codemap",
+  run_timeout_ms = 3000,
+  default_language = "go",
+  keymaps = true,
+})
 ```
 
-Run the current code buffer:
+Options:
 
-```vim
-:Run
-:CodemapRun
+- `workspace`: directory used for shared `input.txt`, `output.txt`, and build artifacts.
+- `run_timeout_ms`: timeout for code execution.
+- `default_language`: fallback filetype for unnamed buffers.
+- `keymaps`: enable or disable the built-in mappings.
+
+Example with a custom workspace and no default mappings:
+
+```lua
+require("codemap").setup({
+  workspace = "~/Projects/leet",
+  keymaps = false,
+})
 ```
 
-Select the language for an unnamed Codemap buffer:
+## Commands
 
-```vim
-:CodemapLanguage
-```
+- `:Codemap` opens the shared two-pane workspace.
+- `:Run` runs the current Codemap buffer.
+- `:CodemapRun` runs the current Codemap buffer.
+- `:CodemapLanguage` selects a language for the current unnamed Codemap buffer.
+- `:CodemapDebug` starts a debug session for the current Go or Python buffer.
 
-Debug the current Go or Python buffer:
+## Default Keymaps
 
-```vim
-:CodemapDebug
-```
+- `<leader>cr`: run the current Codemap buffer.
+- `<F5>`: run the current Codemap buffer from normal or insert mode.
+- `<leader>cd`: debug the current Codemap buffer.
+- `<F6>`: debug the current Codemap buffer from normal or insert mode.
 
-Default mappings:
+## Workspace Layout
 
-- `<leader>cr`: run current Codemap buffer.
-- `<F5>`: run current Codemap buffer from normal or insert mode.
-- `<leader>cd`: debug current Codemap buffer.
-- `<F6>`: debug current Codemap buffer from normal or insert mode.
+Codemap stores its files under the configured `workspace`:
 
-## Shell Launcher
+- `input.txt`: stdin for the current run.
+- `output.txt`: stdout and stderr from the current run.
+- `.codemap-build/`: temporary sources, binaries, and debug helpers.
 
-Your existing launcher can stay as:
-
-```zsh
-codemap() {
-  /Users/bogusdeck/.local/bin/codemap "$@"
-}
-```
-
-The launcher starts Neovim in `~/Projects/leet` and calls `require("codemap")`. Keep the Lazy spec installed in your Neovim config so the module is available.
-
-## Development Workflow
-
-Work on the plugin here:
-
-```sh
-cd ~/Projects/codemap.nvim
-```
-
-Check Lua syntax:
+## Development
 
 ```sh
 luac -p lua/codemap/init.lua
-```
-
-Format Lua files:
-
-```sh
 stylua lua plugin
+nvim --headless -u NONE -i NONE -n +"set rtp+=." +"runtime plugin/codemap.lua" +"lua dofile('tests/smoke.lua')" +qa
 ```
 
-Commit changes:
+## License
 
-```sh
-git status
-git add .
-git commit -m "Update codemap"
-git push
-```
-
-Create the GitHub repository once:
-
-```sh
-gh repo create codemap.nvim --public --source=. --remote=origin --push
-```
-
-If you do not use GitHub CLI, create an empty `codemap.nvim` repository on GitHub and run:
-
-```sh
-git remote add origin git@github.com:YOUR_GITHUB_USERNAME/codemap.nvim.git
-git push -u origin main
-```
+MIT. See [LICENSE](LICENSE).
